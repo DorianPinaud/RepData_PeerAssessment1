@@ -1,25 +1,174 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Analysis of the steps activity
 
+In this document, we will present you the 2 months of activity's steps for an anonymous individual. Each measurement are made with an interval of 5 minutes which result of **17 568 observations**.
 
-## Loading and preprocessing the data
+To reproduce the analysis you first need to get the data. They are accessible with the following link: [Activity.csv](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).
 
+Here the code to get the file and load the data.
 
+```{r}
+fileActivityCompressLink <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+fileActivityCompress <- tempfile()
+download.file(fileActivityCompressLink, fileActivityCompress);
+dataFileName <- "activity.csv"
+fileActivityUncompress <- unzip(fileActivityCompress)
+activityData <- read.csv(dataFileName)
+head(activityData, 10)
+```
 
-## What is mean total number of steps taken per day?
+## Analyses of the step's number each day
 
+In a first time, we will plot the total of steps done by the subject each day.
 
+**(Warning: the package ggplot2 must be installed !)**
 
-## What is the average daily activity pattern?
+```{r, fig.height=4}
+# install ggplot2 if not present for the generation of this document
+if (!require("ggplot2",character.only = TRUE))
+{
+    install.packages("ggplot2",dep=TRUE)
+}
+library(ggplot2)
+#clean data of na values
+activityData <- activityData[!is.na(activityData$steps),]
+# plot it
+plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(stat="identity") + ylab("Steps") + xlab("Dates")
+print(plt)
+```
 
+In the second time, the median and mean:
 
+```{r}
+# get the mean steps each days
+meanActivityDataByDay <- tapply(activityData$steps, activityData$date, mean, na.rm = T, simplify = T)
+# get the mean steps each days
+medianActivityDataByDay <- tapply(activityData$steps, activityData$date, median, na.rm = T, simplify = T)
+# group all the data
+summaryActivityDataByDay <- data.frame(mean=meanActivityDataByDay, median=medianActivityDataByDay, date=names(meanActivityDataByDay), row.names = NULL)
+# clean it
+summaryActivityDataByDay <- summaryActivityDataByDay[!is.na(summaryActivityDataByDay$mea) | !is.na(summaryActivityDataByDay$med),]
+#and display it
+summaryActivityDataByDay
+```
 
-## Imputing missing values
+In a third time, we look for the steps average for each day:
 
+```{r, fig.height=4}
+plt <- ggplot(data=summaryActivityDataByDay, aes(x=as.Date(date), y = mean)) + geom_line() + ylab("mean steps") + xlab("Dates")
+print(plt)
+```
 
+At last, We will observer the 5 minutes interval that, on average, contains the maximum of steps:
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+# compute the maximun of step by day with a rankink system
+# the ranking is invert with the min method and the setps are invert too.
+# We this we have just to subset on the first rank to know the maximum
+activityData$rank <- ave(-activityData$steps, activityData$date, FUN=function(x) rank(x, ties.method = "min"))
+# find the maximum
+maxStepByDay <- subset(activityData, rank == 1)
+# found the average interval
+meanMaxInterval <- mean(maxStepByDay$interval)
+```
+We found for answer: `r meanMaxInterval`
+
+# Handle missing values
+
+To well understand the importance of missing values imputing strategie we will first measured the number of missing value present in the current dataset.
+
+```{r, result="hide"}
+activityData <- read.csv(dataFileName)
+# simple method
+nbrNaValue <- sum(length(which(is.na(activityData$steps))))
+```
+
+We found `r nbrNaValue` Na values in the dataset.
+
+There is a lot of strategies to handle missing values. In the code above, we choose the strategies of simply discarding the value.
+
+```{r, result="hide"}
+# example
+summaryActivityDataByDay <- summaryActivityDataByDay[!is.na(summaryActivityDataByDay$mea) | !is.na(summaryActivityDataByDay$med),]
+``` 
+
+But other strategies are possible. Few are described in the following document: [missing data imputation](http://www.stat.columbia.edu/~gelman/arm/missing.pdf).
+
+For the rest of this document I choose to use the **Simple missing-data approaches that retain all the data**. This method does not change the size of the dataset. The missing values are simply replaced by a new one. Differents startegies are used to choose the value. In this example, we will just replace it by **the mean for that 5 min interval**.
+
+```{r}
+activityDataMeanForInterval <- tapply(activityData$steps, activityData$interval, na.rm=T, mean)
+for (i in 1:nrow(activityData))
+{
+ if (is.na(activityData[i,"steps"]))
+    activityData[i,"steps"] <- activityDataMeanForInterval[as.character(activityData[i, "interval"])]
+}
+head(activityData)
+```
+
+With that strategy, we will be able to observer the impact of the imputation method on the final computation.
+
+## Recompute the dataset
+
+With this new missing value imputing strategies we recompute the total of steps done by the subject each day:
+
+```{r, fig.height=4}
+library(ggplot2)
+#clean data of na values with the new method
+activityData[is.na(activityData)] <- 0
+# plot it
+plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(stat="identity") + ylab("Steps") + xlab("Dates")
+print(plt)
+```
+
+And we compute the mean and the median of those steps by days:
+
+```{r}
+# get the mean steps each days
+meanActivityDataByDay <- tapply(activityData$steps, activityData$date, mean, na.rm = T, simplify = T)
+# get the mean steps each days
+medianActivityDataByDay <- tapply(activityData$steps, activityData$date, median, na.rm = T, simplify = T)
+# group all the data
+summaryActivityDataByDay <- data.frame(mean=meanActivityDataByDay, median=medianActivityDataByDay, date=names(meanActivityDataByDay), row.names = NULL)
+# clean it
+summaryActivityDataByDay <- summaryActivityDataByDay[!is.na(summaryActivityDataByDay$mea) | !is.na(summaryActivityDataByDay$med),]
+#and display it
+summaryActivityDataByDay
+```
+
+We can see that the results are really differents. Particullary on the computation of the median and the mean.
+
+- In the case of the sum of step number by day: the values by day are higher and some field which was empty are now well fill.
+- In the case of the median/mean of the number of step by day: the median value which was constantly at 0 is now fill for some days.
+
+## Comparing data
+
+For finish, we will plot the difference between the average number of steps per 5 minutes interval across the weekdays and the weekends.
+
+```{r, fig.height = 7, fig.width= 7}
+if (!require("chron"))
+{
+  install.packages("chron")
+}
+library(chron)
+par(mfrow=c(2, 1))
+
+# found the appropriate day
+activityData$daysweek <- sapply(as.Date(activityData$date), function(x) 
+  if (is.weekend(x))
+    "weekend"
+  else
+    "weekday"
+    )
+# get the data by days
+activityDataByWeekDays <- split(activityData, activityData$daysweek)
+# get day names
+dayWeekNames <- unique(activityData$daysweek)
+index <- 1
+for (activityDataByWeekDay in activityDataByWeekDays)
+{
+  # get the data 
+  activityDataWeekDayByInterval <- tapply(activityDataByWeekDay$steps, activityDataByWeekDay$interval, mean)
+  plot(activityDataWeekDayByInterval, main=dayWeekNames[index], ylab = "Average steps", xlab = "Interval", type="l")
+  index <- index + 1
+}
+```
