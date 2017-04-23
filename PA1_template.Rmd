@@ -1,6 +1,6 @@
 # Analysis of the steps activity
 
-In this document, we will present you the 2 months of activity's steps for an anonymous individual. Each measurement are made with an interval of 5 minutes which result of **17 568 observations**.
+In this document, we will present you the 2 months of steps activity for an anonymous individual. Each measurement is made with an interval of 5 minutes which results of **17 568 observations**.
 
 To reproduce the analysis you first need to get the data. They are accessible with the following link: [Activity.csv](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).
 
@@ -16,7 +16,7 @@ activityData <- read.csv(dataFileName)
 head(activityData, 10)
 ```
 
-## Analyses of the step's number each day
+## Analyses of the number of steps each day
 
 In a first time, we will plot the total of steps done by the subject each day.
 
@@ -36,7 +36,7 @@ plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(sta
 print(plt)
 ```
 
-In the second time, the median and mean:
+In the second time, the median and the mean:
 
 ```{r}
 # get the mean steps each days
@@ -58,7 +58,7 @@ plt <- ggplot(data=summaryActivityDataByDay, aes(x=as.Date(date), y = mean)) + g
 print(plt)
 ```
 
-At last, We will observer the 5 minutes interval that, on average, contains the maximum of steps:
+At last, We will observe the 5 minutes interval that, on average, contains the maximum of steps:
 
 ```{r}
 # compute the maximun of step by day with a rankink system
@@ -70,11 +70,11 @@ maxStepByDay <- subset(activityData, rank == 1)
 # found the average interval
 meanMaxInterval <- mean(maxStepByDay$interval)
 ```
-We found for answer: `r meanMaxInterval`
+We found as an answer: `r meanMaxInterval`
 
 # Handle missing values
 
-To well understand the importance of missing values imputing strategie we will first measured the number of missing value present in the current dataset.
+To well understand the importance of missing values imputing strategy we will first measure the number of missing values present in the current dataset.
 
 ```{r, result="hide"}
 activityData <- read.csv(dataFileName)
@@ -84,7 +84,7 @@ nbrNaValue <- sum(length(which(is.na(activityData$steps))))
 
 We found `r nbrNaValue` Na values in the dataset.
 
-There is a lot of strategies to handle missing values. In the code above, we choose the strategies of simply discarding the value.
+There is a lot of strategies to handle missing values. In the code above, we chose the strategies of simply discarding the value.
 
 ```{r, result="hide"}
 # example
@@ -93,7 +93,7 @@ summaryActivityDataByDay <- summaryActivityDataByDay[!is.na(summaryActivityDataB
 
 But other strategies are possible. Few are described in the following document: [missing data imputation](http://www.stat.columbia.edu/~gelman/arm/missing.pdf).
 
-For the rest of this document I choose to use the **Simple missing-data approaches that retain all the data**. This method does not change the size of the dataset. The missing values are simply replaced by a new one. Differents startegies are used to choose the value. In this example, we will just replace it by **the mean for that 5 min interval**.
+For the rest of this document I chose to use the **Simple missing-data approaches that retain all the data**. This method does not change the size of the dataset. The missing values are simply replaced by a new one. Different startegies are used to choose the value. In this example, we will just replace it by **the mean for that 5 min interval**.
 
 ```{r}
 activityDataMeanForInterval <- tapply(activityData$steps, activityData$interval, na.rm=T, mean)
@@ -105,7 +105,7 @@ for (i in 1:nrow(activityData))
 head(activityData)
 ```
 
-With that strategy, we will be able to observer the impact of the imputation method on the final computation.
+With that strategy, we will be able to observe the impact of the imputation method on the final computation.
 
 ## Recompute the dataset
 
@@ -120,7 +120,7 @@ plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(sta
 print(plt)
 ```
 
-And we compute the mean and the median of those steps by days:
+And we recompute the mean and the median of those steps by days:
 
 ```{r}
 # get the mean steps each days
@@ -135,7 +135,7 @@ summaryActivityDataByDay <- summaryActivityDataByDay[!is.na(summaryActivityDataB
 summaryActivityDataByDay
 ```
 
-We can see that the results are really differents. Particullary on the computation of the median and the mean.
+We can see that the results are really different. Particularly on the computation of the median and the mean.
 
 - In the case of the sum of step number by day: the values by day are higher and some field which was empty are now well fill.
 - In the case of the median/mean of the number of step by day: the median value which was constantly at 0 is now fill for some days.
