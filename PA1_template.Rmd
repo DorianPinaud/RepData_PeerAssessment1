@@ -33,6 +33,10 @@ library(ggplot2)
 activityData <- activityData[!is.na(activityData$steps),]
 # plot it
 plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(stat="identity") + ylab("Steps") + xlab("Dates")
+# save it
+pdf("total-steps-by-days.pdf")
+print(plt)
+dev.off()
 print(plt)
 ```
 
@@ -55,6 +59,10 @@ In a third time, we look for the steps average for each day:
 
 ```{r, fig.height=4}
 plt <- ggplot(data=summaryActivityDataByDay, aes(x=as.Date(date), y = mean)) + geom_line() + ylab("mean steps") + xlab("Dates")
+# save it
+pdf("total-steps-average-by-days.pdf")
+print(plt)
+dev.off()
 print(plt)
 ```
 
@@ -117,6 +125,10 @@ library(ggplot2)
 activityData[is.na(activityData)] <- 0
 # plot it
 plt <- ggplot(data=activityData, aes(x=as.Date(date), y = steps)) + geom_bar(stat="identity") + ylab("Steps") + xlab("Dates")
+# save it
+pdf("total-steps-by-days-imputing.pdf")
+print(plt)
+dev.off()
 print(plt)
 ```
 
@@ -163,6 +175,18 @@ activityData$daysweek <- sapply(as.Date(activityData$date), function(x)
 activityDataByWeekDays <- split(activityData, activityData$daysweek)
 # get day names
 dayWeekNames <- unique(activityData$daysweek)
+# save it
+pdf("comparing-weekday-weekend.pdf")
+index <- 1
+for (activityDataByWeekDay in activityDataByWeekDays)
+{
+  # get the data 
+  activityDataWeekDayByInterval <- tapply(activityDataByWeekDay$steps, activityDataByWeekDay$interval, mean)
+  plot(activityDataWeekDayByInterval, main=dayWeekNames[index], ylab = "Average steps", xlab = "Interval", type="l")
+  index <- index + 1
+}
+dev.off()
+# redisplay it trough current device
 index <- 1
 for (activityDataByWeekDay in activityDataByWeekDays)
 {
